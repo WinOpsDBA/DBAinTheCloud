@@ -6,7 +6,7 @@ __SECURITY NOTE__
 
 There are sensitive data (i.e. passwords) in .tf file, it is for demonstration purposes only and it will be addressed in the future version.
 
-## Gole ##
+## Goal ##
 
 The environment with one stand-alone SQL Server 2016 accessible through RDP from dedicated public IP address.
 

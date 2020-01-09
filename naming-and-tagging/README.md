@@ -2,7 +2,7 @@
 
 This example shows how to implement tags on Azure resource with Terraform.
 
-## Gole ##
+## Goal ##
 
 Implement three types of tags to the resource group
 
