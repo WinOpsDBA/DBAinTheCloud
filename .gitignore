@@ -5,8 +5,5 @@
 *.tfstate
 *.tfstate.*
 
-# .tfvars files
-*.tfvars
-
-# .tfvars files
+# terraform.tfvars files
 terraform.tfvars
