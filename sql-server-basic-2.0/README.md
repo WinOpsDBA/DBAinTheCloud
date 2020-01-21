@@ -39,6 +39,6 @@ The environment with one stand-alone SQL Server 2016 accessible through RDP from
 
 After building the server you can check public IP address in Azure portal or by using following command to query public IP address details. 
 
-'''
+```     
 az network public-ip show -n d1-dm2-pip1 -g d1-dm2-rg
-'''
+```
