@@ -4,7 +4,6 @@ resource "azurerm_virtual_network" "vn1" {
   name                = "${local.prefix}-vn"
   location            = "${azurerm_resource_group.rg1.location}"
   resource_group_name = "${azurerm_resource_group.rg1.name}"
-  # address_space       = "${var.virtual_network_address_space}"
   address_space = ["${var.vnets["${var.location}"]}"]
 
   tags = "${local.tags}"
