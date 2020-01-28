@@ -10,10 +10,16 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+- task: ArchiveFiles@1
+  inputs:
+    rootFolderOrFile: 'sql-server-basic-2.0'
+    includeRootFolder: true
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/dm3-$(Build.BuildId).zip'
+    replaceExistingArchive: true
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+- task: PublishBuildArtifact@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/dm3-$(Build.BuildId).zip'
+    ArtifactName: 'dm3'
+    publishLocation: 'Container'
