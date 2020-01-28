@@ -15,11 +15,11 @@ steps:
     rootFolderOrFile: 'sql-server-basic-2.0'
     includeRootFolder: true
     archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/dm3-$(Build.BuildId).zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/dm2-$(Build.BuildId).zip'
     replaceExistingArchive: true
 
 - task: PublishBuildArtifact@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/dm3-$(Build.BuildId).zip'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/dm2-$(Build.BuildId).zip'
     ArtifactName: 'dm3'
     publishLocation: 'Container'
