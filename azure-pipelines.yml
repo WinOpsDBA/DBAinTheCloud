@@ -12,7 +12,7 @@ pool:
 steps:
 - task: ArchiveFiles@1
   inputs:
-    rootFolderOrFile: 'sql-server-basic-2.0'
+    rootFolder: 'sql-server-basic-2.0'
     includeRootFolder: true
     archiveType: 'zip'
     archiveFile: '$(Build.ArtifactStagingDirectory)/dm2-$(Build.BuildId).zip'
