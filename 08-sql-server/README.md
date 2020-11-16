@@ -3,12 +3,12 @@ This folder contains code used for creating the cloud lab described in my [blog 
  
 ## Infrastructure
 Infrastructure overview.
-1 x storage
-1 x vnet
-3 x subnets
-1 x Domain controller
-1 x Azure DevOps agent
-1 x SQL server
+- 1 x storage
+- 1 x vnet
+- 3 x subnets
+- 1 x Domain controller
+- 1 x Azure DevOps agent
+- 1 x SQL server
  
 ## terraform version
 Terraform version used for build.
