@@ -1,4 +1,7 @@
-# Cloud lab with customised SQL Server VM, domain controller and Azure DevOps build agent in Azure with use of Terraform.
+# 08-sql-server
+
+## Cloud lab with customised SQL Server VM, domain controller and Azure DevOps build agent in Azure with use of Terraform.
+
 This folder contains code used for creating the cloud lab described in my [blog post](http://www.winopsdba.com/blog/Azure-cloud-lab-SQL-server-DevOps-agent-and-DC.html). How to create and customize Azure SQL Server VM with use of PowerShellDSC (SqlServerDsc, NetworkingDsc) and T-SQL. And how to add it to a cloud lab with a domain controller and Azure DevOps build agent in Azure with use of Terraform.
  
 ## Infrastructure
