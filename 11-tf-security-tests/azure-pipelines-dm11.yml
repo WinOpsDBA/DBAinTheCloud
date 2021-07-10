@@ -1,0 +1,114 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+  paths:
+    include: ['11-tf-security-tests']
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+- group: 'azure-main'
+
+steps:
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.SourcesDirectory)/11-tf-security-tests'
+    includeRootFolder: true
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/dm11-$(Build.BuildId).zip'
+    replaceExistingArchive: true
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.SourcesDirectory)/11-tf-security-tests/infrastructure'
+    includeRootFolder: true
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/dm11-infrastructure-$(Build.BuildId).zip'
+    replaceExistingArchive: true
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.SourcesDirectory)/11-tf-security-tests/scripts'
+    includeRootFolder: true
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/dm11-scripts-$(Build.BuildId).zip'
+    replaceExistingArchive: true
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.SourcesDirectory)/11-tf-security-tests/tests'
+    includeRootFolder: true
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/dm11-tests-$(Build.BuildId).zip'
+    replaceExistingArchive: true
+
+### test start
+
+- bash: |
+    terraform init \
+      -backend-config "key=dso1/core.terraform.tfstate" \
+      -backend-config "subscription_id=$SUBSCRIPTION_ID" \
+      -backend-config "tenant_id=$TENANT_ID" \
+      -backend-config "client_id=$CLIENT_ID" \
+      -backend-config "client_secret=$CLIENT_SECRET" \
+  workingDirectory: '$(Build.SourcesDirectory)/11-tf-security-tests/infrastructure'
+  displayName: Terraform Init
+  env:
+    SUBSCRIPTION_ID: $(subscription_id)
+    TENANT_ID:       $(tenant_id)
+    CLIENT_ID:       $(client_id)
+    CLIENT_SECRET:   $(client_secret)
+
+- bash: |
+    terraform validate
+  workingDirectory: '$(Build.SourcesDirectory)/11-tf-security-tests/infrastructure'
+  displayName: Terraform Validate
+
+- task: DockerInstaller@0
+  inputs:
+    dockerVersion: '17.09.0-ce'
+
+- bash: |
+    chmod -R 777 infrastructure
+  workingDirectory: $(Build.SourcesDirectory)/11-tf-security-tests
+  displayName: Update permissions - folder
+
+- bash: |
+    docker run --rm -t -v "$(pwd):/src" tfsec/tfsec /src -f junit --out /src/TEST-ftsec-results.xml --tfvars-file terraform.tfvars --soft-fail
+  workingDirectory: '$(Build.SourcesDirectory)/11-tf-security-tests/infrastructure'
+  displayName: Run tfsec scan
+
+- bash: |
+    sudo chown vsts:docker TEST-ftsec-results.xml && sudo chmod 777 TEST-ftsec-results.xml # && ls -las
+  workingDirectory: '$(Build.SourcesDirectory)/11-tf-security-tests/infrastructure'
+  displayName: Update permissions - test results
+
+- task: PublishTestResults@2
+  displayName: Publish Test Results
+  inputs:
+    testResultsFormat: 'JUnit' # Options: JUnit, NUnit, VSTest, xUnit, cTest
+    testResultsFiles: '**/TEST-*.xml' 
+
+### test end
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/dm11-infrastructure-$(Build.BuildId).zip'
+    ArtifactName: 'dm11'
+    publishLocation: 'Container'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/dm11-scripts-$(Build.BuildId).zip'
+    ArtifactName: 'dm11'
+    publishLocation: 'Container'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/dm11-tests-$(Build.BuildId).zip'
+    ArtifactName: 'dm11'
+    publishLocation: 'Container'
