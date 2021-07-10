@@ -40,3 +40,16 @@ How to create a test environment/cloud lab with a domain controller and Azure De
 ## 08-sql-server
 
 How to create and customize Azure SQL Server VM with use of PowerShellDSC and T-SQL. And how to add it to a cloud lab with domain controller and Azure DevOps build agent in Azure with use of Terraform.
+
+## 09-sql-server-tests
+
+How to create a cloud lab with customised SQL Server VM, domain controller and Azure DevOps build agent in Azure with use of Terraform as part of CI/CD pipeline and test it with Pester 5.
+
+## 10-secret-variable
+
+How to expose secret variables in Azure DevOps CI/CD pipeline with use of powershell step.
+
+## 11-tf-security-tests
+
+DevSecOps - How to validate terraform script and run security static code analysis with use of tfsec as a part of Azure DevOps CI/CD pipeline.
+
