@@ -1,0 +1,89 @@
+trigger:
+  paths:
+    include: ["12-container-trivy-sacnning"]
+
+resources:
+  - repo: self
+
+variables:
+  tag: "ubuntu_az_terraform.$(Build.BuildNumber)"
+  imageName: "nikosts/workbench"
+
+stages:
+  - stage: Build
+    displayName: Build image
+    jobs:
+      - job: Build
+        displayName: Build
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: Docker@2
+            displayName: Build an image
+            inputs:
+              command: "build"
+              Dockerfile: "$(Build.SourcesDirectory)/12-container-trivy-sacnning/dockerfile"
+              tags: "$(tag)"
+              arguments: "-t $(imageName):$(tag)"
+
+          - task: CmdLine@2
+            displayName: Scan for reports
+            inputs:
+              script: |
+                docker run --rm \
+                -v /var/run/docker.sock:/var/run/docker.sock \
+                -v $HOME/Library/Caches:/root/.cache/ \
+                -v "$(pwd):/src" \
+                aquasec/trivy \
+                --exit-code 0 \
+                --severity LOW,MEDIUM,HIGH \
+                --format template --template "@contrib/junit.tpl" \
+                -o src/junit-report-low-med-high.xml \
+                --ignore-unfixed \
+                '$(imageName):$(tag)'
+                 
+                docker run --rm \
+                -v /var/run/docker.sock:/var/run/docker.sock \
+                -v $HOME/Library/Caches:/root/.cache/ \
+                -v "$(pwd):/src" \
+                aquasec/trivy \
+                --exit-code 0 \
+                --severity CRITICAL \
+                --format template --template "@contrib/junit.tpl" \
+                -o src/junit-report-crit.xml \
+                --ignore-unfixed \
+                '$(imageName):$(tag)'
+
+          - task: PublishTestResults@2
+            displayName: Publish Test Results
+            inputs:
+              testResultsFormat: "JUnit" # Options: JUnit, NUnit, VSTest, xUnit, cTest
+              testResultsFiles: "**/junit-report-*.xml"
+
+          # --severity CRITICAL -> fail only on clitical, --severity CRITICAL,HIGH -> fail only on clitical and high,
+
+          - task: CmdLine@2
+            displayName: Scan for errors
+            inputs:
+              script: |
+                docker run --rm \
+                -v /var/run/docker.sock:/var/run/docker.sock \
+                -v $HOME/Library/Caches:/root/.cache/ \
+                -v "$(pwd):/src" \
+                aquasec/trivy \
+                --exit-code 1 \
+                --severity CRITICAL \
+                --ignore-unfixed \
+                '$(imageName):$(tag)'
+
+          - task: Docker@2
+            inputs:
+              containerRegistry: "DockerHub-WinOpsDBA-nikosts"
+              command: "login"
+
+          # - task: Docker@2
+          #   inputs:
+          #     containerRegistry: 'DockerHub-WinOpsDBA-nikosts'
+          #     repository: '$(imageName)'
+          #     command: 'push'
+          #     tags: '$(tag)'
