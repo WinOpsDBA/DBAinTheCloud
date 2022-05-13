@@ -10,3 +10,7 @@
 
 # terraform.tfvars files
 terraform.tfvars
+
+# sample sql backup
+DataWeekender_CU5/sample_sql_backup/*.bak
+*.bak
