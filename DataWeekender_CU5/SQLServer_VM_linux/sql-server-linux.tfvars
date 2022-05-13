@@ -1,0 +1,9 @@
+location         = "westeurope"
+environment_name = "dw5"
+project_name     = "sql3"
+adminusername    = "dw5admin"
+sql_server_port  = "6007"
+network_size     = 12
+network_no_sql   = 16
+server_count     = 1
+vm_size_sql      = "Standard_F2"
