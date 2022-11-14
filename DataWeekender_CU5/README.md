@@ -1,6 +1,9 @@
 # Data Weekender CU5
 
+Sample secret.tfvars file
+
 ```
+# secret.tfvars
 subscription_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 client_id       = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 client_secret   = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
