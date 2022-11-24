@@ -1,6 +1,6 @@
 # DBAinTheCloud
 
-This repository contains code for scripts and configuration I am demonstrating in my blog [DBAinTheCloud](http://www.winopsdba.com).
+This repository contains code for scripts and configuration I am demonstrating in my blog [DBAinTheCloud](https://www.winopsdba.com).
 
 You will find samples of code in:
 - [x] Terraform
@@ -53,3 +53,10 @@ How to expose secret variables in Azure DevOps CI/CD pipeline with use of powers
 
 DevSecOps - How to validate terraform script and run security static code analysis with use of tfsec as a part of Azure DevOps CI/CD pipeline.
 
+## 12-container-trivy-sacnning
+
+DevSecOps - How to scan a container for vulnerabilities and publish results as a part of Azure DevOps CI/CD pipeline.
+
+## 14-dastardly-burp-cicd-dast-scanning
+
+How to implement DAST security scanning for web application/portal with the use of the Dastardly tool as a part of Azure DevOps CI/CD pipeline.
