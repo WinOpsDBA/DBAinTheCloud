@@ -60,3 +60,7 @@ DevSecOps - How to scan a container for vulnerabilities and publish results as a
 ## 14-dastardly-burp-cicd-dast-scanning
 
 How to implement DAST security scanning for web application/portal with the use of the Dastardly tool as a part of Azure DevOps CI/CD pipeline.
+
+## 15-azure-monitor-agent-vm-extension
+
+How to nstalling Azure Monitor Agent virtual machine extension, configuring data collection rule and Log Analytics workspace with Terraform to collect Windows events.
