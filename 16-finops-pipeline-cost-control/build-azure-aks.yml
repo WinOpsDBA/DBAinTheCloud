@@ -1,0 +1,225 @@
+trigger:
+  branches:
+    include:
+      - master
+      - feature/*      
+  paths:
+    include: 
+      - _todo_aks/infrastructure/azure-aks/*.tf
+      - _todo_aks/infrastructure/azure-aks/*.tfvars
+      - _todo_aks/pipelines/build-azure-aks.yml
+    exclude: 
+      - '**/README.md'
+
+pr:
+  branches:
+    include:
+      - master
+  paths:
+    include: 
+      - _todo_aks/infrastructure/azure-aks/*.tf
+      - _todo_aks/infrastructure/azure-aks/*.tfvars
+      - _todo_aks/pipelines/build-azure-aks.yml
+
+pool:
+  vmImage: ubuntu-latest
+
+resources:
+  repositories:
+  - repository: destination
+    type: github
+    name: 'WinOpsDBA/work-in-progress'
+    ref: master
+    endpoint: WinOpsDBA
+
+variables:
+- group: 'azure-aks'
+- name: folder_name
+  value: '_todo_aks/infrastructure/azure-aks'
+- name: be_key
+  value: 'aks1-k8s1.terraform.tfstate'   
+- name: destination_git_repo_folder
+  value: 'destinattion_branch'
+- name: current_git_repo_folder
+  value: 'current_branch'  
+
+stages:
+- stage: "Build"
+  displayName: "Build"
+  jobs:
+    - job: "Build"
+      displayName: "Build"
+      steps:
+        - bash: |
+            cd $(Build.SourcesDirectory)/_todo_aks/infrastructure
+            zip -v $(Build.ArtifactStagingDirectory)/azure-aks-$(Build.BuildId).zip -r azure-aks -i **/*.sh **/*.tf **/*.tfvars
+        - bash: |
+            terraform version
+        - bash: |
+            terraform init \
+              -backend-config "key=$KEY" \
+              -backend-config "subscription_id=$SUBSCRIPTION_ID" \
+              -backend-config "tenant_id=$TENANT_ID" \
+              -backend-config "client_id=$CLIENT_ID" \
+              -backend-config "client_secret=$CLIENT_SECRET" \
+          workingDirectory: $(System.DefaultWorkingDirectory)/$(folder_name)
+          displayName: Terraform Init
+          env:
+            SUBSCRIPTION_ID: $(be_subscription_id)
+            TENANT_ID:       $(be_tenant_id)
+            CLIENT_ID:       $(be_client_id)
+            CLIENT_SECRET:   $(be_client_secret)
+            KEY:             $(be_key)
+        - bash: |
+            terraform validate
+          workingDirectory: $(System.DefaultWorkingDirectory)/$(folder_name)
+          displayName: Terraform Validate
+        - bash: |
+            docker pull bridgecrew/checkov
+          workingDirectory: $(System.DefaultWorkingDirectory)/$(folder_name)
+          displayName: "Pull > bridgecrew/checkov"
+        - bash: |
+            docker run \
+              --volume $(pwd):/tf bridgecrew/checkov \
+              --directory /tf \
+              --output junitxml \
+              --soft-fail > $(pwd)/CheckovReport.xml              
+          workingDirectory: $(System.DefaultWorkingDirectory)/$(folder_name)
+          displayName: "Run > checkov"
+        - bash: |
+            docker run \
+              --volume $(pwd):/tf bridgecrew/checkov \
+              --directory /tf \
+              --soft-fail              
+          workingDirectory: $(System.DefaultWorkingDirectory)/$(folder_name)
+          displayName: "Run > checkov - cli output"  
+        - task: PublishTestResults@2
+          inputs:
+            testRunTitle: "Checkov Results"
+            failTaskOnFailedTests: false
+            testResultsFormat: "JUnit"
+            testResultsFiles: "CheckovReport.xml"
+            searchFolder: "$(System.DefaultWorkingDirectory)/$(folder_name)"
+          displayName: "Publish > Checkov scan results"
+        - task: PublishBuildArtifacts@1
+          inputs:
+            PathtoPublish: '$(Build.ArtifactStagingDirectory)/azure-aks-$(Build.BuildId).zip'
+            ArtifactName: 'azure-aks'
+            publishLocation: 'Container'
+        - script: |
+            docker run \
+              --volume $(pwd):/tf bridgecrew/checkov \
+              --directory /tf \
+              --output cyclonedx \
+              --soft-fail > $(pwd)/checkov-aks-sbom.xml
+          workingDirectory: $(System.DefaultWorkingDirectory)/$(folder_name)
+          displayName: 'Checkov scan - sbom output'          
+        - bash: |
+            zip -v checkov-aks-sbom.xml.zip checkov-aks-sbom.xml
+          workingDirectory: $(System.DefaultWorkingDirectory)/$(folder_name)
+          displayName: 'Zip sbom output'          
+        - task: PublishBuildArtifacts@1
+          inputs:
+            PathtoPublish: '$(System.DefaultWorkingDirectory)/$(folder_name)/checkov-aks-sbom.xml.zip'
+            ArtifactName: 'checkov-sbom'
+            publishLocation: 'Container'
+        - bash: |
+            curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          workingDirectory: $(System.DefaultWorkingDirectory)/$(folder_name)
+          displayName: 'Install grype'
+        - bash: |
+            grype db update
+          workingDirectory: $(System.DefaultWorkingDirectory)/$(folder_name)
+          displayName: 'Update grype db'   
+        - bash: |
+            grype sbom:./checkov-aks-sbom.xml
+          workingDirectory: $(System.DefaultWorkingDirectory)/$(folder_name)
+          displayName: 'Scan sbom for vulnerabilities'
+        - bash: |
+            docker run -e INFRACOST_API_KEY=$INFRACOST_API_KEY \
+            -e INFRACOST_CURRENCY=GBP \
+            -e INFRACOST_AZURE_OVERRIDE_REGION=westeu \
+            --volume $(pwd):/terraform_iac \
+            infracost/infracost:ci-latest \
+            breakdown \
+            --path /terraform_iac \
+            --terraform-var-file /terraform_iac/env/dev.tfvars
+          env:
+            INFRACOST_API_KEY: $(infracost_api_key)
+          workingDirectory: $(System.DefaultWorkingDirectory)/$(folder_name)
+          displayName: 'infracost'
+
+    - job: "PR_add_comment"
+      displayName: "Add PR comments"
+      dependsOn: Build
+      steps:
+        - checkout: self
+          path: 's/$(current_git_repo_folder)'        
+        - checkout: destination
+          path: 's/$(destination_git_repo_folder)'
+        
+        # install infracost
+        - bash: |
+            curl -O -L https://github.com/infracost/infracost/releases/latest/download/infracost-linux-amd64.tar.gz
+            tar zxvf infracost-linux-amd64.tar.gz && rm infracost-linux-amd64.tar.gz
+            mv infracost-linux-amd64 /usr/local/bin/infracost
+            infracost --version
+          displayName: Install infracost
+        
+        # current breadown
+        - bash: |
+            infracost breakdown \
+            --path $(current_git_repo_folder)/$(folder_name) \
+            --terraform-var-file env/dev.tfvars
+          env:
+            INFRACOST_API_KEY: $(infracost_api_key)
+            INFRACOST_AZURE_OVERRIDE_REGION: westeu
+            INFRACOST_CURRENCY: GBP
+          workingDirectory: $(System.DefaultWorkingDirectory)
+          displayName: infracost - breakdown
+
+        # destination baseline (PR destination branch)
+        - bash: |
+            infracost breakdown \
+            --path $(destination_git_repo_folder)/$(folder_name) \
+            --terraform-var-file env/dev.tfvars \
+            --format json \
+            --out-file dev-infracost-base.json
+          env:
+            INFRACOST_API_KEY: $(infracost_api_key)
+            INFRACOST_AZURE_OVERRIDE_REGION: westeu
+            INFRACOST_CURRENCY: GBP
+          workingDirectory: $(System.DefaultWorkingDirectory)
+          displayName: infracost - destination baseline (PR destination branch)
+
+        # calculate current (PR) cost differance
+        - bash: |
+            infracost diff \
+            --path $(current_git_repo_folder)/$(folder_name) \
+            --terraform-var-file env/dev.tfvars \
+            --compare-to dev-infracost-base.json \
+            --format json \
+            --out-file dev-infracost.json
+          env:
+            INFRACOST_API_KEY: $(infracost_api_key)
+            INFRACOST_AZURE_OVERRIDE_REGION: westeu
+            INFRACOST_CURRENCY: GBP
+          workingDirectory: $(System.DefaultWorkingDirectory)
+          displayName: infracost - current cost differance (PR branch vs. PR destination branch)
+
+        # add comment
+        - bash: |
+            infracost comment github \
+            --path dev-infracost.json \
+            --repo=$BUILD_REPOSITORY_NAME \
+            --pull-request=$SYSTEM_PULLREQUEST_PULLREQUESTNUMBER \
+            --github-token=$GITHUB_TOKEN \
+            --policy-path=$(current_git_repo_folder)/$(folder_name)/cost_policy.rego \
+            --behavior=new
+          env:
+            INFRACOST_API_KEY: $(infracost_api_key)
+            GITHUB_TOKEN: $(github_token)
+          workingDirectory: $(System.DefaultWorkingDirectory)
+          displayName: infracost - add PR comment
+
+      condition: eq(variables['Build.Reason'], 'PullRequest')
