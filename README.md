@@ -63,8 +63,8 @@ How to implement DAST security scanning for web application/portal with the use 
 
 ## 15-azure-monitor-agent-vm-extension
 
-How to nstalling Azure Monitor Agent virtual machine extension, configuring data collection rule and Log Analytics workspace with Terraform to collect Windows events.
+How to install Azure Monitor Agent virtual machine extension, configuring data collection rule and Log Analytics workspace with Terraform to collect Windows events.
 
-## 16=finops-pipeline-cost-control
+## 16-finops-pipeline-cost-control
 
-How to implemwnt a cost visibility and automated cost policy validation in development pipelines for IaC (Infrastructure as a Code) resources with use of infracost tool.
+How to implement cost visibility and automated cost policy validation in development pipelines for IaC (Infrastructure as a Code) resources with the use of infracost tool.
