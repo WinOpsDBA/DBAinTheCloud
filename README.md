@@ -63,7 +63,7 @@ How to implement DAST security scanning for web application/portal with the use 
 
 ## 15-azure-monitor-agent-vm-extension
 
-How to nstalling Azure Monitor Agent virtual machine extension, configuring data collection rule and Log Analytics workspace with Terraform to collect Windows events.
+How to install Azure Monitor Agent virtual machine extension, configuring data collection rule and Log Analytics workspace with Terraform to collect Windows events.
 
 ## 16-finops-pipeline-cost-control
 
