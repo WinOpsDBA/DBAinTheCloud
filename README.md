@@ -65,6 +65,10 @@ How to implement DAST security scanning for web application/portal with the use 
 
 How to nstalling Azure Monitor Agent virtual machine extension, configuring data collection rule and Log Analytics workspace with Terraform to collect Windows events.
 
-## 16=finops-pipeline-cost-control
+## 16-finops-pipeline-cost-control
 
 How to implemwnt a cost visibility and automated cost policy validation in development pipelines for IaC (Infrastructure as a Code) resources with use of infracost tool.
+
+## 17-finops-budget-and-alerts
+
+How to configure budget and alerts for Azure resource group in terraform code to provide cost visibility (FinOps).
